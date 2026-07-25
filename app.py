@@ -6,6 +6,7 @@ from auth import auth_bp, login_required, role_required
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "super-secret-recovery-key-2026")
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 31536000  # 1 year static asset caching
 app.register_blueprint(auth_bp)
 
 # Ensure database tables are created on startup

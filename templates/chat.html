@@ -44,20 +44,25 @@ const chatMessages = document.getElementById('chatMessages');
 const chatForm = document.getElementById('chatForm');
 const messageInput = document.getElementById('messageInput');
 
+let lastMessageCount = 0;
+
 function scrollToBottom() {
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 scrollToBottom();
 
-// Live Chat Polling every 5 seconds as specified
+// Efficient Live Chat Polling (only updates DOM when new messages arrive)
 setInterval(async () => {
     try {
         const response = await fetch(`/api/chat/${recipientId}/messages`);
+        if (!response.ok) return;
         const data = await response.json();
-        if (data.status === 'success') {
-            const isAtBottom = (chatMessages.scrollHeight - chatMessages.scrollTop) <= (chatMessages.clientHeight + 100);
+        
+        if (data.status === 'success' && data.messages.length !== lastMessageCount) {
+            lastMessageCount = data.messages.length;
+            const isAtBottom = (chatMessages.scrollHeight - chatMessages.scrollTop) <= (chatMessages.clientHeight + 120);
             
-            chatMessages.innerHTML = '';
+            const fragment = document.createDocumentFragment();
             data.messages.forEach(msg => {
                 const bubble = document.createElement('div');
                 bubble.className = `message-bubble ${msg.is_me ? 'message-me' : 'message-them'}`;
@@ -66,8 +71,11 @@ setInterval(async () => {
                     ${escapeHtml(msg.message)}
                     <span style="font-size: 0.7rem; opacity: 0.65; display: block; margin-top: 0.3rem; text-align: right;">${escapeHtml(msg.created_at)}</span>
                 `;
-                chatMessages.appendChild(bubble);
+                fragment.appendChild(bubble);
             });
+            
+            chatMessages.innerHTML = '';
+            chatMessages.appendChild(fragment);
 
             if (isAtBottom) {
                 scrollToBottom();
