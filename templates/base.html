@@ -7,43 +7,58 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
-    <nav class="navbar">
-        <a href="{{ url_for('index') }}" class="navbar-brand">
-            🛡️ <span>Recovery</span>Platform
-        </a>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
 
-        <ul class="nav-links">
-            {% if session.get('user_id') %}
-                {% if session.get('user_role') == 'individual' %}
-                    <li><a href="{{ url_for('dashboard_individual') }}">Dashboard</a></li>
-                    <li><a href="{{ url_for('resources') }}">Educational Hub</a></li>
-                {% elif session.get('user_role') == 'caregiver' %}
-                    <li><a href="{{ url_for('dashboard_caregiver') }}">Caregiver Workspace</a></li>
-                    <li><a href="{{ url_for('resources') }}">Resources</a></li>
-                {% elif session.get('user_role') == 'admin' %}
-                    <li><a href="{{ url_for('dashboard_admin') }}">Admin Console</a></li>
+    <header>
+        <nav class="navbar" aria-label="Main Navigation">
+            <a href="{{ url_for('index') }}" class="navbar-brand" aria-label="Recovery Platform Home">
+                🛡️ <span>Recovery</span>Platform
+            </a>
+
+            <ul class="nav-links">
+                {% if session.get('user_id') %}
+                    {% if session.get('user_role') == 'individual' %}
+                        <li><a href="{{ url_for('dashboard_individual') }}">Dashboard</a></li>
+                        <li><a href="{{ url_for('resources') }}">Educational Hub</a></li>
+                        <li>
+                            <a href="{{ url_for('panic_button') }}" class="panic-nav-btn" aria-label="Emergency Crisis Help">
+                                🚨 CRISIS HELP
+                            </a>
+                        </li>
+                    {% elif session.get('user_role') == 'caregiver' %}
+                        <li><a href="{{ url_for('dashboard_caregiver') }}">Caregiver Workspace</a></li>
+                        <li><a href="{{ url_for('resources') }}">Resources</a></li>
+                        <li>
+                            <a href="{{ url_for('panic_button') }}" class="panic-nav-btn" aria-label="View Emergency Contacts">
+                                🚨 CRISIS CONTACTS
+                            </a>
+                        </li>
+                    {% elif session.get('user_role') == 'admin' %}
+                        <li><a href="{{ url_for('dashboard_admin') }}">Admin Console</a></li>
+                        <!-- Panic button omitted from Admin console as per logical design -->
+                    {% endif %}
+
+                    <li><a href="{{ url_for('auth.logout') }}" aria-label="Logout">Logout ({{ session.get('user_name') }})</a></li>
+                {% else %}
+                    <li><a href="{{ url_for('resources') }}">Educational Resources</a></li>
+                    <li>
+                        <a href="{{ url_for('panic_button') }}" class="panic-nav-btn" aria-label="Public Panic & Crisis Help">
+                            🚨 EMERGENCY HELP
+                        </a>
+                    </li>
+                    <li><a href="{{ url_for('auth.login') }}" class="btn btn-primary">Sign In</a></li>
                 {% endif %}
+            </ul>
+        </nav>
+    </header>
 
-                <li>
-                    <a href="{{ url_for('panic_button') }}" class="panic-bar-btn">
-                        🚨 QUICK PANIC
-                    </a>
-                </li>
-                <li><a href="{{ url_for('auth.logout') }}">Logout ({{ session.get('user_name') }})</a></li>
-            {% else %}
-                <li><a href="{{ url_for('resources') }}">Educational Resources</a></li>
-                <li><a href="{{ url_for('auth.login') }}" class="btn btn-primary">Login / Register</a></li>
-            {% endif %}
-        </ul>
-    </nav>
-
-    <div class="container">
+    <main id="main-content" class="container" tabindex="-1">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-                <div class="flash-messages">
+                <div class="flash-messages" role="alert">
                     {% for category, message in messages %}
                         <div class="alert alert-{{ category }}">{{ message }}</div>
                     {% endfor %}
@@ -52,10 +67,10 @@
         {% endwith %}
 
         {% block content %}{% endblock %}
-    </div>
+    </main>
 
     <footer>
-        <p>&copy; 2026 Recovery & Prevention Digital Platform. Built for Zero-Typing Emergency & Caregiver Support.</p>
+        <p>&copy; 2026 Recovery & Prevention Platform. Built for crisis support and caregiver intervention.</p>
     </footer>
 </body>
 </html>

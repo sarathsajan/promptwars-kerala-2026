@@ -1,99 +1,98 @@
 {% extends "base.html" %}
 
-{% block title %}Sign In / Register - Recovery Platform{% endblock %}
+{% block title %}Sign In - Recovery Platform{% endblock %}
 
 {% block content %}
-<div style="max-width: 540px; margin: 2rem auto;">
+<div style="max-width: 500px; margin: 1.5rem auto;">
     <div class="card">
-        <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
-            <button class="btn tab-btn {% if active_tab == 'login' %}btn-primary{% else %}btn-secondary{% endif %}" onclick="switchTab('login')">Sign In</button>
-            <button class="btn tab-btn {% if active_tab == 'register-individual' %}btn-primary{% else %}btn-secondary{% endif %}" onclick="switchTab('register-individual')">Register Individual</button>
-            <button class="btn tab-btn {% if active_tab == 'register-caregiver' %}btn-primary{% else %}btn-secondary{% endif %}" onclick="switchTab('register-caregiver')">Register Caregiver</button>
+        <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;" role="tablist" aria-label="Account Access Options">
+            <button class="btn tab-btn {% if active_tab == 'login' %}btn-primary{% else %}btn-secondary{% endif %}" role="tab" id="tab-btn-login" aria-selected="{% if active_tab == 'login' %}true{% else %}false{% endif %}" onclick="switchTab('login')">Sign In</button>
+            <button class="btn tab-btn {% if active_tab == 'register-individual' %}btn-primary{% else %}btn-secondary{% endif %}" role="tab" id="tab-btn-ind" aria-selected="{% if active_tab == 'register-individual' %}true{% else %}false{% endif %}" onclick="switchTab('register-individual')">Register Individual</button>
+            <button class="btn tab-btn {% if active_tab == 'register-caregiver' %}btn-primary{% else %}btn-secondary{% endif %}" role="tab" id="tab-btn-cg" aria-selected="{% if active_tab == 'register-caregiver' %}true{% else %}false{% endif %}" onclick="switchTab('register-caregiver')">Register Caregiver</button>
         </div>
 
         <!-- LOGIN FORM -->
-        <div id="tab-login" class="tab-content" style="{% if active_tab != 'login' %}display: none;{% endif %}">
-            <h2 class="card-title">Sign In to Your Account</h2>
+        <div id="tab-login" class="tab-content" role="tabpanel" aria-labelledby="tab-btn-login" style="{% if active_tab != 'login' %}display: none;{% endif %}">
+            <h2 class="card-title">Sign In</h2>
             <form action="{{ url_for('auth.login') }}" method="POST">
                 <div class="form-group">
-                    <label>Email Address</label>
-                    <input type="email" name="email" class="form-control" placeholder="user@example.com" required>
+                    <label for="login-email">Email Address</label>
+                    <input type="email" id="login-email" name="email" class="form-control" placeholder="user@example.com" required>
                 </div>
                 <div class="form-group">
-                    <label>Password</label>
-                    <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" name="password" class="form-control" placeholder="••••••••" required>
                 </div>
                 <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Sign In</button>
             </form>
         </div>
 
         <!-- REGISTER INDIVIDUAL FORM -->
-        <div id="tab-register-individual" class="tab-content" style="{% if active_tab != 'register-individual' %}display: none;{% endif %}">
-            <h2 class="card-title">Register as Individual User</h2>
-            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.2rem;">Self-signup for personal recovery support.</p>
+        <div id="tab-register-individual" class="tab-content" role="tabpanel" aria-labelledby="tab-btn-ind" style="{% if active_tab != 'register-individual' %}display: none;{% endif %}">
+            <h2 class="card-title">Individual Registration</h2>
             <form action="{{ url_for('auth.register_individual') }}" method="POST">
                 <div class="form-group">
-                    <label>Full Name</label>
-                    <input type="text" name="name" class="form-control" required>
+                    <label for="ind-name">Full Name</label>
+                    <input type="text" id="ind-name" name="name" class="form-control" required>
                 </div>
                 <div class="form-group">
-                    <label>Email Address</label>
-                    <input type="email" name="email" class="form-control" required>
+                    <label for="ind-email">Email Address</label>
+                    <input type="email" id="ind-email" name="email" class="form-control" required>
                 </div>
                 <div class="form-group">
-                    <label>Phone Number</label>
-                    <input type="tel" name="phone" class="form-control" placeholder="+91 9876543210" required>
+                    <label for="ind-phone">Phone Number</label>
+                    <input type="tel" id="ind-phone" name="phone" class="form-control" placeholder="+91 9876543210" required>
                 </div>
                 <div class="form-group">
-                    <label>Location (City / Region)</label>
-                    <input type="text" name="location" class="form-control" placeholder="Kochi, Kerala" required>
+                    <label for="ind-location">Location (City / State)</label>
+                    <input type="text" id="ind-location" name="location" class="form-control" placeholder="Kochi, Kerala" required>
                 </div>
                 <div class="form-group">
-                    <label>Password</label>
-                    <input type="password" name="password" class="form-control" required>
+                    <label for="ind-password">Password</label>
+                    <input type="password" id="ind-password" name="password" class="form-control" required>
                 </div>
-                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Register Account</button>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Create Account</button>
             </form>
         </div>
 
         <!-- REGISTER CAREGIVER FORM -->
-        <div id="tab-register-caregiver" class="tab-content" style="{% if active_tab != 'register-caregiver' %}display: none;{% endif %}">
-            <h2 class="card-title">Register as Caregiver</h2>
-            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.2rem;">Account will be verified by Administrator before activation.</p>
+        <div id="tab-register-caregiver" class="tab-content" role="tabpanel" aria-labelledby="tab-btn-cg" style="{% if active_tab != 'register-caregiver' %}display: none;{% endif %}">
+            <h2 class="card-title">Caregiver Registration</h2>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">Requires Administrator verification before activation.</p>
             <form action="{{ url_for('auth.register_caregiver') }}" method="POST">
                 <div class="form-group">
-                    <label>Full Name</label>
-                    <input type="text" name="name" class="form-control" required>
+                    <label for="cg-name">Full Name</label>
+                    <input type="text" id="cg-name" name="name" class="form-control" required>
                 </div>
                 <div class="form-group">
-                    <label>Email Address</label>
-                    <input type="email" name="email" class="form-control" required>
+                    <label for="cg-email">Email Address</label>
+                    <input type="email" id="cg-email" name="email" class="form-control" required>
                 </div>
                 <div class="form-group">
-                    <label>Phone Number</label>
-                    <input type="tel" name="phone" class="form-control" required>
+                    <label for="cg-phone">Phone Number</label>
+                    <input type="tel" id="cg-phone" name="phone" class="form-control" required>
                 </div>
                 <div class="form-group">
-                    <label>Location</label>
-                    <input type="text" name="location" class="form-control" required>
+                    <label for="cg-location">Location</label>
+                    <input type="text" id="cg-location" name="location" class="form-control" required>
                 </div>
                 <div class="form-group">
-                    <label>Educational Qualifications</label>
-                    <input type="text" name="education" class="form-control" placeholder="B.Sc Psychology, M.S.W." required>
+                    <label for="cg-edu">Education</label>
+                    <input type="text" id="cg-edu" name="education" class="form-control" placeholder="B.Sc Psychology" required>
                 </div>
                 <div class="form-group">
-                    <label>Professional Certification</label>
-                    <input type="text" name="qualification" class="form-control" placeholder="Certified Addiction Counselor" required>
+                    <label for="cg-qual">Professional Qualification</label>
+                    <input type="text" id="cg-qual" name="qualification" class="form-control" placeholder="Certified Counselor" required>
                 </div>
                 <div class="form-group">
-                    <label>Relevant Experience (Years/Details)</label>
-                    <textarea name="experience" class="form-control" rows="2" placeholder="5 years in clinical rehab counseling..." required></textarea>
+                    <label for="cg-exp">Experience</label>
+                    <textarea id="cg-exp" name="experience" class="form-control" rows="2" placeholder="Clinical experience..." required></textarea>
                 </div>
                 <div class="form-group">
-                    <label>Password</label>
-                    <input type="password" name="password" class="form-control" required>
+                    <label for="cg-pass">Password</label>
+                    <input type="password" id="cg-pass" name="password" class="form-control" required>
                 </div>
-                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Submit Caregiver Profile</button>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Submit Caregiver Application</button>
             </form>
         </div>
     </div>
@@ -102,10 +101,17 @@
 <script>
 function switchTab(tabId) {
     document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
-    document.querySelectorAll('.tab-btn').forEach(el => el.classList.replace('btn-primary', 'btn-secondary'));
+    document.querySelectorAll('.tab-btn').forEach(el => {
+        el.classList.replace('btn-primary', 'btn-secondary');
+        el.setAttribute('aria-selected', 'false');
+    });
 
     document.getElementById('tab-' + tabId).style.display = 'block';
-    event.currentTarget.classList.replace('btn-secondary', 'btn-primary');
+    const activeBtn = document.getElementById('tab-btn-' + (tabId === 'login' ? 'login' : (tabId === 'register-individual' ? 'ind' : 'cg')));
+    if (activeBtn) {
+        activeBtn.classList.replace('btn-secondary', 'btn-primary');
+        activeBtn.setAttribute('aria-selected', 'true');
+    }
 }
 </script>
 {% endblock %}

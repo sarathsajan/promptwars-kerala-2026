@@ -1,37 +1,39 @@
 {% extends "base.html" %}
 
-{% block title %}Direct Caregiver Chat - Recovery Platform{% endblock %}
+{% block title %}Chat - Recovery Platform{% endblock %}
 
 {% block content %}
 <div style="max-width: 800px; margin: 0 auto;">
     <div style="margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
         <a href="{{ url_for('index') }}" class="btn btn-secondary" style="font-size: 0.9rem;">&larr; Back to Dashboard</a>
-        <a href="{{ url_for('panic_button') }}" class="btn btn-danger" style="font-size: 0.9rem;">🚨 Panic Assist</a>
+        {% if session.get('user_role') == 'individual' %}
+            <a href="{{ url_for('panic_button') }}" class="btn btn-danger" style="font-size: 0.9rem;">🚨 Emergency Crisis Help</a>
+        {% elif session.get('user_role') == 'caregiver' %}
+            <a href="{{ url_for('panic_button', user_id=recipient.id) }}" class="btn btn-secondary" style="font-size: 0.9rem;">View Crisis Contacts</a>
+        {% endif %}
     </div>
 
-    <div class="chat-container">
+    <div class="chat-container" role="region" aria-label="Direct Messaging Workspace">
         <div class="chat-header">
-            <div>
-                <h2 style="font-size: 1.1rem; margin: 0;">Chat with {{ recipient.name }}</h2>
-                <small style="color: var(--text-secondary);">Role: {{ recipient.role|capitalize }} • Phone: {{ recipient.phone }}</small>
-            </div>
-            <span class="badge badge-success">Live Session</span>
+            <h2 style="font-size: 1.1rem; margin: 0;">Chat with {{ recipient.name }}</h2>
+            <small style="color: var(--text-secondary);">Phone: {{ recipient.phone }} • {{ recipient.role|capitalize }}</small>
         </div>
 
-        <div class="chat-messages" id="chatMessages">
+        <div class="chat-messages" id="chatMessages" role="log" aria-live="polite">
             {% for msg in messages %}
                 <div class="message-bubble {% if msg.sender_id == session['user_id'] %}message-me{% else %}message-them{% endif %}">
-                    <small style="font-size: 0.75rem; opacity: 0.8; display: block; margin-bottom: 0.2rem;">{{ msg.sender_name }}</small>
+                    <small style="font-size: 0.75rem; opacity: 0.85; display: block; margin-bottom: 0.2rem;">{{ msg.sender_name }}</small>
                     {{ msg.message }}
-                    <span style="font-size: 0.7rem; opacity: 0.6; display: block; margin-top: 0.3rem; text-align: right;">{{ msg.created_at }}</span>
+                    <span style="font-size: 0.7rem; opacity: 0.65; display: block; margin-top: 0.3rem; text-align: right;">{{ msg.created_at }}</span>
                 </div>
             {% endfor %}
         </div>
 
         <form id="chatForm" class="chat-input-area">
             <input type="hidden" id="recipientId" value="{{ recipient.id }}">
-            <input type="text" id="messageInput" class="form-control" placeholder="Type your message here..." required autocomplete="off">
-            <button type="submit" class="btn btn-primary">Send</button>
+            <label for="messageInput" class="skip-link">Type your message</label>
+            <input type="text" id="messageInput" class="form-control" placeholder="Type a message..." required autocomplete="off">
+            <button type="submit" class="btn btn-primary" aria-label="Send Message">Send</button>
         </form>
     </div>
 </div>
@@ -47,29 +49,34 @@ function scrollToBottom() {
 }
 scrollToBottom();
 
-// Poll for new messages every 3 seconds
+// Live Chat Polling every 5 seconds as specified
 setInterval(async () => {
     try {
         const response = await fetch(`/api/chat/${recipientId}/messages`);
         const data = await response.json();
         if (data.status === 'success') {
+            const isAtBottom = (chatMessages.scrollHeight - chatMessages.scrollTop) <= (chatMessages.clientHeight + 100);
+            
             chatMessages.innerHTML = '';
             data.messages.forEach(msg => {
                 const bubble = document.createElement('div');
                 bubble.className = `message-bubble ${msg.is_me ? 'message-me' : 'message-them'}`;
                 bubble.innerHTML = `
-                    <small style="font-size: 0.75rem; opacity: 0.8; display: block; margin-bottom: 0.2rem;">${msg.sender_name}</small>
+                    <small style="font-size: 0.75rem; opacity: 0.85; display: block; margin-bottom: 0.2rem;">${escapeHtml(msg.sender_name)}</small>
                     ${escapeHtml(msg.message)}
-                    <span style="font-size: 0.7rem; opacity: 0.6; display: block; margin-top: 0.3rem; text-align: right;">${msg.created_at}</span>
+                    <span style="font-size: 0.7rem; opacity: 0.65; display: block; margin-top: 0.3rem; text-align: right;">${escapeHtml(msg.created_at)}</span>
                 `;
                 chatMessages.appendChild(bubble);
             });
-            scrollToBottom();
+
+            if (isAtBottom) {
+                scrollToBottom();
+            }
         }
     } catch (e) {
-        console.error("Polling error:", e);
+        console.error("Chat sync error:", e);
     }
-}, 3000);
+}, 5000);
 
 chatForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -89,19 +96,18 @@ chatForm.addEventListener('submit', async (e) => {
         });
         const data = await response.json();
         if (data.status === 'success') {
-            // Instantly append local bubble
             const bubble = document.createElement('div');
             bubble.className = 'message-bubble message-me';
             bubble.innerHTML = `
-                <small style="font-size: 0.75rem; opacity: 0.8; display: block; margin-bottom: 0.2rem;">You</small>
+                <small style="font-size: 0.75rem; opacity: 0.85; display: block; margin-bottom: 0.2rem;">You</small>
                 ${escapeHtml(message)}
-                <span style="font-size: 0.7rem; opacity: 0.6; display: block; margin-top: 0.3rem; text-align: right;">Just now</span>
+                <span style="font-size: 0.7rem; opacity: 0.65; display: block; margin-top: 0.3rem; text-align: right;">Just now</span>
             `;
             chatMessages.appendChild(bubble);
             scrollToBottom();
         }
     } catch (e) {
-        console.error("Sending error:", e);
+        console.error("Send message error:", e);
     }
 });
 

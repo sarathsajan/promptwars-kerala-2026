@@ -14,15 +14,7 @@ with app.app_context():
 
 @app.route('/')
 def index():
-    if 'user_id' in session:
-        role = session.get('user_role')
-        if role == 'individual':
-            return redirect(url_for('dashboard_individual'))
-        elif role == 'caregiver':
-            return redirect(url_for('dashboard_caregiver'))
-        elif role == 'admin':
-            return redirect(url_for('dashboard_admin'))
-    return redirect(url_for('auth.login'))
+    return render_template('index.html')
 
 # ================================
 # INDIVIDUAL USER DASHBOARD & ROUTES
@@ -121,14 +113,13 @@ def delete_emergency_contact(contact_id):
     return redirect(url_for('dashboard_individual'))
 
 # ================================
-# QUICK ACCESS PANIC BUTTON
+# PUBLIC & AUTHENTICATED PANIC BUTTON
 # ================================
 
 @app.route('/panic')
-@login_required
 def panic_button():
-    user_id = session['user_id']
-    user_role = session['user_role']
+    user_id = session.get('user_id')
+    user_role = session.get('user_role')
     conn = get_db()
     cursor = conn.cursor()
 
@@ -136,7 +127,7 @@ def panic_button():
     caregiver = None
     individual_user = None
 
-    if user_role == 'individual':
+    if user_id and user_role == 'individual':
         cursor.execute("SELECT * FROM emergency_contacts WHERE user_id = ?", (user_id,))
         contacts = cursor.fetchall()
 
@@ -148,7 +139,7 @@ def panic_button():
         """, (user_id,))
         caregiver = cursor.fetchone()
 
-    elif user_role == 'caregiver':
+    elif user_id and user_role == 'caregiver':
         target_individual_id = request.args.get('user_id')
         if target_individual_id:
             cursor.execute("SELECT * FROM users WHERE id = ?", (target_individual_id,))
@@ -215,7 +206,6 @@ def chat(recipient_id):
     conn = get_db()
     cursor = conn.cursor()
 
-    # Verify relationship (Individual <-> Caregiver)
     cursor.execute("SELECT * FROM users WHERE id = ?", (recipient_id,))
     recipient = cursor.fetchone()
 
@@ -297,7 +287,6 @@ def send_chat_message():
 # ================================
 
 @app.route('/resources')
-@login_required
 def resources():
     conn = get_db()
     cursor = conn.cursor()
@@ -305,7 +294,6 @@ def resources():
     items = cursor.fetchall()
     conn.close()
 
-    # Group by category
     categorized = {}
     for item in items:
         cat = item['category']
@@ -326,7 +314,6 @@ def dashboard_admin():
     conn = get_db()
     cursor = conn.cursor()
 
-    # All Caregivers with profile info & assigned user counts
     cursor.execute("""
         SELECT u.id, u.name, u.email, u.phone, u.location, u.created_at,
                cp.education, cp.qualification, cp.experience, cp.is_verified, cp.is_active, cp.last_login,
@@ -338,7 +325,6 @@ def dashboard_admin():
     """)
     caregivers = cursor.fetchall()
 
-    # All Individual Users with assigned caregiver info
     cursor.execute("""
         SELECT u.id, u.name, u.email, u.phone, u.location, u.created_at,
                cg.name as caregiver_name
@@ -350,7 +336,6 @@ def dashboard_admin():
     """)
     individuals = cursor.fetchall()
 
-    # All Admin Users
     cursor.execute("SELECT * FROM users WHERE role = 'admin' ORDER BY created_at ASC")
     admins = cursor.fetchall()
 

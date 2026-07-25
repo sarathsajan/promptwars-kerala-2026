@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Recovery & Prevention Platform{% endblock %}
+
+{% block content %}
+<section class="hero-landing">
+    <h1 class="hero-title">Recovery & Prevention Platform</h1>
+    <p class="hero-subtitle">Immediate support for individuals navigating substance recovery and their caregivers.</p>
+
+    <div class="hero-actions">
+        <a href="{{ url_for('panic_button') }}" class="hero-btn-panic" aria-label="Immediate Panic and Emergency Help">
+            🚨 EMERGENCY CRISIS HELP
+        </a>
+
+        {% if session.get('user_id') %}
+            {% if session.get('user_role') == 'individual' %}
+                <a href="{{ url_for('dashboard_individual') }}" class="hero-btn-login">
+                    Go to My Dashboard &rarr;
+                </a>
+            {% elif session.get('user_role') == 'caregiver' %}
+                <a href="{{ url_for('dashboard_caregiver') }}" class="hero-btn-login">
+                    Go to Caregiver Workspace &rarr;
+                </a>
+            {% elif session.get('user_role') == 'admin' %}
+                <a href="{{ url_for('dashboard_admin') }}" class="hero-btn-login">
+                    Go to Admin Console &rarr;
+                </a>
+            {% endif %}
+        {% else %}
+            <a href="{{ url_for('auth.login') }}" class="hero-btn-login" aria-label="Sign In or Register Account">
+                🔑 Sign In / Account Access
+            </a>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

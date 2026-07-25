@@ -4,30 +4,30 @@
 
 {% block content %}
 <div style="margin-bottom: 2rem;">
-    <h1 style="font-size: 1.8rem; margin-bottom: 0.5rem;">Caregiver Workspace: {{ caregiver.name }}</h1>
-    <p style="color: var(--text-secondary);">Manage your assigned recovery individuals and active support sessions.</p>
+    <h1 style="font-size: 1.8rem; margin-bottom: 0.25rem;">Caregiver Workspace: {{ caregiver.name }}</h1>
+    <p style="color: var(--text-secondary);">Manage support for your assigned individual users.</p>
 </div>
 
-<!-- STATUS CARD -->
-<div class="card" style="margin-bottom: 2rem;">
+<!-- PROFILE STATUS -->
+<div class="card">
     <div style="display: flex; gap: 1.5rem; flex-wrap: wrap; align-items: center; justify-content: space-between;">
         <div>
-            <span style="font-weight: 600; color: var(--text-secondary);">Verification Status:</span>
+            <span style="font-weight: 600; color: var(--text-secondary);">Verification:</span>
             {% if caregiver.is_verified == 1 %}
-                <span class="badge badge-success">Verified</span>
+                <span class="alert alert-success" style="padding: 0.2rem 0.6rem; font-size: 0.85rem;">Verified</span>
             {% else %}
-                <span class="badge badge-warning">Pending Admin Verification</span>
+                <span class="alert alert-warning" style="padding: 0.2rem 0.6rem; font-size: 0.85rem;">Pending Admin Review</span>
             {% endif %}
             
-            <span style="font-weight: 600; color: var(--text-secondary); margin-left: 1.5rem;">Active Status:</span>
+            <span style="font-weight: 600; color: var(--text-secondary); margin-left: 1rem;">Status:</span>
             {% if caregiver.is_active == 1 %}
-                <span class="badge badge-success">Active</span>
+                <span class="alert alert-success" style="padding: 0.2rem 0.6rem; font-size: 0.85rem;">Active</span>
             {% else %}
-                <span class="badge badge-danger">Inactive</span>
+                <span class="alert alert-danger" style="padding: 0.2rem 0.6rem; font-size: 0.85rem;">Inactive</span>
             {% endif %}
         </div>
         <div>
-            <span style="font-weight: 600; color: var(--text-secondary);">Assigned Capacity:</span>
+            <span style="font-weight: 600; color: var(--text-secondary);">Current Capacity:</span>
             <strong style="color: var(--accent-teal); font-size: 1.1rem;">{{ assigned_count }} / 5 Users</strong>
         </div>
     </div>
@@ -35,15 +35,13 @@
 
 {% if caregiver.is_verified == 0 %}
 <div class="alert alert-warning">
-    <strong>Verification Pending:</strong> Your caregiver profile is currently undergoing review by an Administrator. Once verified, individual users will be assigned to your workspace.
+    <strong>Pending Verification:</strong> Your account must be verified by an Administrator before users can be assigned to your workspace.
 </div>
 {% endif %}
 
 <!-- ASSIGNED USERS TABLE -->
 <div class="card">
-    <h2 class="card-title">
-        👥 Assigned Individuals (Max 5)
-    </h2>
+    <h2 class="card-title">👥 Assigned Users (Max 5)</h2>
 
     {% if assigned_users %}
         <div class="table-responsive">
@@ -66,11 +64,11 @@
                             <td>{{ user.assigned_at }}</td>
                             <td>
                                 <div style="display: flex; gap: 0.5rem;">
-                                    <a href="{{ url_for('chat', recipient_id=user.id) }}" class="btn btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">
-                                        💬 Live Chat
+                                    <a href="{{ url_for('chat', recipient_id=user.id) }}" class="btn btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" aria-label="Open Chat with {{ user.name }}">
+                                        💬 Chat
                                     </a>
-                                    <a href="{{ url_for('panic_button', user_id=user.id) }}" class="btn btn-danger" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">
-                                        🚨 Panic Contacts
+                                    <a href="{{ url_for('panic_button', user_id=user.id) }}" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" aria-label="View {{ user.name }} Crisis Contacts">
+                                        View Crisis Contacts
                                     </a>
                                 </div>
                             </td>
@@ -80,7 +78,7 @@
             </table>
         </div>
     {% else %}
-        <p style="color: var(--text-secondary); padding: 1rem 0;">No individual users assigned yet.</p>
+        <p style="color: var(--text-secondary); padding: 1rem 0;">No individual users currently assigned to your workspace.</p>
     {% endif %}
 </div>
 {% endblock %}
