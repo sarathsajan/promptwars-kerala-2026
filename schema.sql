@@ -102,3 +102,13 @@ CREATE TABLE IF NOT EXISTS reviews (
     FOREIGN KEY(caregiver_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
+-- STAGE 3: Private Journal & Voice Notes Table (STRICTLY Individual User-Only)
+CREATE TABLE IF NOT EXISTS journals (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    title TEXT,
+    content TEXT,
+    transcript TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+);

@@ -19,6 +19,7 @@
                 {% if session.get('user_id') %}
                     {% if session.get('user_role') == 'individual' %}
                         <li><a href="{{ url_for('dashboard_individual') }}">Dashboard</a></li>
+                        <li><a href="{{ url_for('journal') }}">📓 My Journal</a></li>
                         <li><a href="{{ url_for('resources') }}">Educational Hub</a></li>
                         <li>
                             <a href="{{ url_for('panic_button') }}" class="panic-nav-btn" aria-label="Emergency Crisis Help">

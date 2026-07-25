@@ -430,6 +430,65 @@ def send_chat_message():
     return jsonify({'status': 'success', 'message_id': msg_id})
 
 # ================================
+# STAGE 3: PRIVATE JOURNAL & VOICE NOTES (Individual-Only)
+# ================================
+
+@app.route('/journal')
+@role_required('individual')
+def journal():
+    user_id = session['user_id']
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT * FROM journals WHERE user_id = ? ORDER BY created_at DESC",
+        (user_id,)
+    )
+    entries = cursor.fetchall()
+    conn.close()
+    return render_template('journal.html', entries=entries)
+
+@app.route('/journal/save', methods=['POST'])
+@role_required('individual')
+def save_journal():
+    user_id = session['user_id']
+    title = request.form.get('title', '').strip() or 'Untitled Entry'
+    content = request.form.get('content', '').strip()
+    transcript = request.form.get('transcript', '').strip()
+
+    if not content and not transcript:
+        flash("Journal entry cannot be empty.", "warning")
+        return redirect(url_for('journal'))
+
+    entry_id = str(uuid.uuid4())
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO journals (id, user_id, title, content, transcript) VALUES (?, ?, ?, ?, ?)",
+        (entry_id, user_id, title, content, transcript)
+    )
+    conn.commit()
+    conn.close()
+
+    flash("Journal entry saved privately.", "success")
+    return redirect(url_for('journal'))
+
+@app.route('/journal/delete/<entry_id>', methods=['POST'])
+@role_required('individual')
+def delete_journal(entry_id):
+    user_id = session['user_id']
+    conn = get_db()
+    cursor = conn.cursor()
+    # Strict ownership check: only delete if it belongs to this user
+    cursor.execute(
+        "DELETE FROM journals WHERE id = ? AND user_id = ?",
+        (entry_id, user_id)
+    )
+    conn.commit()
+    conn.close()
+    flash("Journal entry deleted.", "info")
+    return redirect(url_for('journal'))
+
+# ================================
 # EDUCATIONAL RESOURCES HUB
 # ================================
 
