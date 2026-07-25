@@ -1,0 +1,52 @@
+RECOVERY AND PREVENTION PLATFORM
+
+Design and build a recovery and prevention web-app platform using sqlite as a database that 
+supports individuals navigating substance use disorders and their caregivers. The solution 
+must utilize generative AI as a core engine to provide zero-typing interventions, personalized 
+emergency scripts, backed by educational resources, and contextual safety tools that empower 
+users, families when cognitive load is highest. The solution should be live for dev demo on 
+netlify or vercel, localhost link is not usefeul for judges. Source code management is through 
+git and github. Should use proper security protocols and best practices. Language of preference 
+is python, sql and html/css/js
+
+
+===========================================================================================
+SIGNUP AND LOGIN
+ - Individual user (details added by themselves during signup)
+ - Basic details - name, phone number, location, email id, password
+ - Auto generated uuid (primary key)
+
+Caregiver user (added by admin after verification)
+ - Basic details - name, phone number, location (during signup)
+ - Advanced details like education, professional qualification, experience (during signup)
+ - Auto generated uuid (primary key)
+
+Administrator user (details hardcoded in database)
+ - Can add or delete caregiver user
+ - Name, phone number, location, email id, password
+ - Auto generated uuid (primary key)
+ - Can delete individual users
+
+
+===========================================================================================
+ACTIONS THAT CAN BE TAKEN
+
+Individual user
+ - Add 2 emergency contacts (visible to themselves and the assigned caregiver)
+ - Ask for ad-hoc session (20 mins) with available caregiver
+ - Provide rating and review for caregiver
+ - Mood button
+ - Educational resources
+ - Voice recording (optional speech to text) (private, user only)
+ - Journal (private, user only)
+
+Caregiver user
+ - Marked active caregiver only if advanced details verified by admin
+ - Marked inactive if not logged-in for more than 30 days then marked active only by admin after verification
+ - Assigned to max 5 users
+ - Create case report of the assigned user - visible to all caregivers assigned to that user later
+
+Admin user
+ - Can add/modify/delete caregiver user
+ - Can modify/delete individual users
+ - Can add/modify/delete admin users
