@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Console - Recovery Platform{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <h1 style="font-size: 1.8rem; margin-bottom: 0.5rem;">System Administrator Console</h1>
+    <p style="color: var(--text-secondary);">Manage Caregivers verification, Individual Accounts, and Admin Permissions.</p>
+</div>
+
+<!-- CAREGIVER MANAGEMENT SECTION -->
+<div class="card" style="margin-bottom: 2rem;">
+    <h2 class="card-title">👨‍⚕️ Caregiver Verification & Management</h2>
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>Caregiver Name</th>
+                    <th>Credentials</th>
+                    <th>Contact</th>
+                    <th>Verified?</th>
+                    <th>Active?</th>
+                    <th>Users</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cg in caregivers %}
+                    <tr>
+                        <td>
+                            <strong>{{ cg.name }}</strong>
+                            <br><small style="color: var(--text-secondary);">{{ cg.email }}</small>
+                        </td>
+                        <td>
+                            <small><strong>Edu:</strong> {{ cg.education }}</small><br>
+                            <small><strong>Qual:</strong> {{ cg.qualification }}</small>
+                        </td>
+                        <td>{{ cg.phone }}<br><small>{{ cg.location }}</small></td>
+                        <td>
+                            {% if cg.is_verified == 1 %}
+                                <span class="badge badge-success">Verified</span>
+                            {% else %}
+                                <span class="badge badge-warning">Pending</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if cg.is_active == 1 %}
+                                <span class="badge badge-success">Active</span>
+                            {% else %}
+                                <span class="badge badge-danger">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td><strong>{{ cg.assigned_count }} / 5</strong></td>
+                        <td>
+                            <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+                                {% if cg.is_verified == 0 %}
+                                    <form action="{{ url_for('admin_verify_caregiver', caregiver_id=cg.id) }}" method="POST">
+                                        <button type="submit" class="btn btn-primary" style="padding: 0.35rem 0.7rem; font-size: 0.8rem;">Approve</button>
+                                    </form>
+                                {% endif %}
+                                <form action="{{ url_for('admin_toggle_caregiver_active', caregiver_id=cg.id) }}" method="POST">
+                                    <button type="submit" class="btn btn-secondary" style="padding: 0.35rem 0.7rem; font-size: 0.8rem;">Toggle Active</button>
+                                </form>
+                                <form action="{{ url_for('admin_delete_caregiver', caregiver_id=cg.id) }}" method="POST" onsubmit="return confirm('Delete this caregiver?');">
+                                    <button type="submit" class="btn btn-danger" style="padding: 0.35rem 0.7rem; font-size: 0.8rem;">Delete</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="grid-2">
+    <!-- INDIVIDUAL USERS MANAGEMENT -->
+    <div class="card">
+        <h2 class="card-title">👥 Individual Users</h2>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>User Name</th>
+                        <th>Email / Phone</th>
+                        <th>Assigned Caregiver</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ind in individuals %}
+                        <tr>
+                            <td><strong>{{ ind.name }}</strong></td>
+                            <td><small>{{ ind.email }}<br>{{ ind.phone }}</small></td>
+                            <td>
+                                {% if ind.caregiver_name %}
+                                    <span class="badge badge-success">{{ ind.caregiver_name }}</span>
+                                {% else %}
+                                    <span class="badge badge-warning">Unassigned</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <form action="{{ url_for('admin_delete_individual', user_id=ind.id) }}" method="POST" onsubmit="return confirm('Delete individual user?');">
+                                    <button type="submit" class="btn btn-danger" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ADMIN MANAGEMENT -->
+    <div class="card">
+        <h2 class="card-title">🔑 Administrator Accounts</h2>
+        <ul style="list-style: none; margin-bottom: 1.5rem;">
+            {% for adm in admins %}
+                <li style="display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0; border-bottom: 1px solid var(--border-color);">
+                    <div>
+                        <strong>{{ adm.name }}</strong> ({{ adm.email }})
+                    </div>
+                    {% if adm.id != session['user_id'] %}
+                        <form action="{{ url_for('admin_delete_admin', admin_id=adm.id) }}" method="POST" onsubmit="return confirm('Delete admin?');">
+                            <button type="submit" class="btn btn-danger" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">Remove</button>
+                        </form>
+                    {% else %}
+                        <span class="badge badge-info">You</span>
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+
+        <h3 style="font-size: 1rem; margin-bottom: 0.8rem;">Create New Administrator</h3>
+        <form action="{{ url_for('admin_add_admin') }}" method="POST">
+            <div class="form-group">
+                <input type="text" name="name" class="form-control" placeholder="Admin Name" required>
+            </div>
+            <div class="form-group">
+                <input type="email" name="email" class="form-control" placeholder="admin@domain.com" required>
+            </div>
+            <div class="form-group">
+                <input type="tel" name="phone" class="form-control" placeholder="Phone Number" required>
+            </div>
+            <div class="form-group">
+                <input type="text" name="location" class="form-control" placeholder="Location" required>
+            </div>
+            <div class="form-group">
+                <input type="password" name="password" class="form-control" placeholder="Password" required>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%;">+ Create Admin</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

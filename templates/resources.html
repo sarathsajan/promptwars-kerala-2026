@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Educational Hub - Recovery Platform{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <h1 style="font-size: 1.8rem; margin-bottom: 0.5rem;">Educational & Harm Reduction Resources</h1>
+    <p style="color: var(--text-secondary);">Evidence-based guidance, coping strategies, and crisis recovery materials.</p>
+</div>
+
+{% for category, items in categorized_resources.items() %}
+    <div style="margin-bottom: 2.5rem;">
+        <h2 style="font-size: 1.3rem; border-bottom: 2px solid var(--accent-teal); padding-bottom: 0.4rem; margin-bottom: 1.2rem; color: var(--accent-teal);">
+            📚 {{ category }}
+        </h2>
+
+        <div class="grid-2">
+            {% for item in items %}
+                <div class="card">
+                    <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem; color: var(--text-primary);">{{ item.title }}</h3>
+                    <p style="color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 1rem;">{{ item.description }}</p>
+                    <div style="background: rgba(15, 23, 42, 0.6); padding: 1rem; border-radius: var(--radius-sm); border-left: 3px solid var(--accent-teal); font-size: 0.9rem; line-height: 1.5; white-space: pre-line;">
+                        {{ item.content }}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endfor %}
+{% endblock %}

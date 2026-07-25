@@ -36,7 +36,7 @@ Individual user
  - Ask for ad-hoc session (20 mins) with available caregiver
  - Provide rating and review for caregiver
  - Mood button
- - Educational resources
+ - Educational resources link
  - Voice recording (optional speech to text) (private, user only)
  - Journal (private, user only)
 
