@@ -1,7 +1,7 @@
 import os
 import uuid
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
-from database import get_db, init_db, auto_assign_caregiver, update_caregiver_inactivity_status, get_caregiver_assigned_count
+from database import get_db, init_db, auto_assign_caregiver, update_caregiver_inactivity_status, get_caregiver_assigned_count, get_caregiver_rating_info
 from auth import auth_bp, login_required, role_required
 
 app = Flask(__name__)
@@ -37,7 +37,7 @@ def dashboard_individual():
     cursor.execute("SELECT * FROM emergency_contacts WHERE user_id = ? ORDER BY created_at ASC", (user_id,))
     contacts = cursor.fetchall()
 
-    # Assigned Caregiver
+    # Assigned Caregiver with rating info
     cursor.execute("""
         SELECT u.id, u.name, u.email, u.phone, u.location, cp.education, cp.qualification
         FROM assignments a
@@ -46,6 +46,13 @@ def dashboard_individual():
         WHERE a.individual_id = ?
     """, (user_id,))
     caregiver = cursor.fetchone()
+
+    caregiver_rating = None
+    existing_review = None
+    if caregiver:
+        caregiver_rating = get_caregiver_rating_info(caregiver['id'])
+        cursor.execute("SELECT * FROM reviews WHERE individual_id = ? AND caregiver_id = ?", (user_id, caregiver['id']))
+        existing_review = cursor.fetchone()
 
     # If no caregiver assigned, try auto-assigning
     if not caregiver:
@@ -59,14 +66,94 @@ def dashboard_individual():
                 WHERE a.individual_id = ?
             """, (user_id,))
             caregiver = cursor.fetchone()
+            if caregiver:
+                caregiver_rating = get_caregiver_rating_info(caregiver['id'])
+
+    # Stage 2: Mood Logs History (recent 10)
+    cursor.execute("SELECT * FROM mood_logs WHERE user_id = ? ORDER BY created_at DESC LIMIT 10", (user_id,))
+    mood_logs = cursor.fetchall()
 
     conn.close()
     return render_template(
         'dashboard_user.html',
         user=user,
         contacts=contacts,
-        caregiver=caregiver
+        caregiver=caregiver,
+        caregiver_rating=caregiver_rating,
+        existing_review=existing_review,
+        mood_logs=mood_logs
     )
+
+# STAGE 2: Mood Tracking Endpoint
+@app.route('/mood/log', methods=['POST'])
+@role_required('individual')
+def log_mood():
+    user_id = session['user_id']
+    mood_type = request.form.get('mood_type', '').strip()
+    notes = request.form.get('notes', '').strip()
+
+    if not mood_type:
+        flash("Please select a mood option.", "warning")
+        return redirect(url_for('dashboard_individual'))
+
+    log_id = str(uuid.uuid4())
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO mood_logs (id, user_id, mood_type, notes) VALUES (?, ?, ?, ?)",
+        (log_id, user_id, mood_type, notes)
+    )
+    conn.commit()
+    conn.close()
+
+    flash(f"Logged your mood as '{mood_type}'. Stay strong!", "success")
+    return redirect(url_for('dashboard_individual'))
+
+# STAGE 2: Caregiver Rating & Review Endpoint
+@app.route('/caregiver/review', methods=['POST'])
+@role_required('individual')
+def submit_caregiver_review():
+    user_id = session['user_id']
+    caregiver_id = request.form.get('caregiver_id')
+    rating = request.form.get('rating')
+    review_text = request.form.get('review_text', '').strip()
+
+    if not caregiver_id or not rating:
+        flash("Rating selection is required.", "danger")
+        return redirect(url_for('dashboard_individual'))
+
+    try:
+        rating = int(rating)
+        if rating < 1 or rating > 5:
+            raise ValueError()
+    except ValueError:
+        flash("Rating must be between 1 and 5 stars.", "danger")
+        return redirect(url_for('dashboard_individual'))
+
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    # Check if review already exists for this pair
+    cursor.execute("SELECT id FROM reviews WHERE individual_id = ? AND caregiver_id = ?", (user_id, caregiver_id))
+    existing = cursor.fetchone()
+
+    if existing:
+        cursor.execute(
+            "UPDATE reviews SET rating = ?, review_text = ?, created_at = CURRENT_TIMESTAMP WHERE id = ?",
+            (rating, review_text, existing['id'])
+        )
+        flash("Your review has been updated.", "success")
+    else:
+        review_id = str(uuid.uuid4())
+        cursor.execute(
+            "INSERT INTO reviews (id, individual_id, caregiver_id, rating, review_text) VALUES (?, ?, ?, ?, ?)",
+            (review_id, user_id, caregiver_id, rating, review_text)
+        )
+        flash("Thank you! Your rating & feedback have been recorded.", "success")
+
+    conn.commit()
+    conn.close()
+    return redirect(url_for('dashboard_individual'))
 
 @app.route('/emergency-contacts/add', methods=['POST'])
 @role_required('individual')
@@ -157,7 +244,7 @@ def panic_button():
     )
 
 # ================================
-# CAREGIVER DASHBOARD & ROUTES
+# CAREGIVER DASHBOARD & CASE REPORTS
 # ================================
 
 @app.route('/dashboard/caregiver')
@@ -177,9 +264,13 @@ def dashboard_caregiver():
     """, (user_id,))
     caregiver = cursor.fetchone()
 
+    # Caregiver average rating
+    rating_info = get_caregiver_rating_info(user_id)
+
     # Assigned Individuals (max 5)
     cursor.execute("""
-        SELECT u.id, u.name, u.email, u.phone, u.location, a.assigned_at
+        SELECT u.id, u.name, u.email, u.phone, u.location, a.assigned_at,
+               (SELECT COUNT(*) FROM case_reports cr WHERE cr.individual_id = u.id) as case_report_count
         FROM assignments a
         JOIN users u ON a.individual_id = u.id
         WHERE a.caregiver_id = ?
@@ -192,9 +283,64 @@ def dashboard_caregiver():
     return render_template(
         'dashboard_caregiver.html',
         caregiver=caregiver,
+        rating_info=rating_info,
         assigned_users=assigned_users,
         assigned_count=assigned_count
     )
+
+# STAGE 2: Case Reports System for Caregivers
+@app.route('/case-reports/<individual_id>')
+@role_required('caregiver')
+def view_case_reports(individual_id):
+    caregiver_id = session['user_id']
+    conn = get_db()
+    cursor = conn.cursor()
+
+    # Fetch individual user details
+    cursor.execute("SELECT * FROM users WHERE id = ? AND role = 'individual'", (individual_id,))
+    individual = cursor.fetchone()
+
+    if not individual:
+        conn.close()
+        flash("Individual user not found.", "danger")
+        return redirect(url_for('dashboard_caregiver'))
+
+    # Fetch all case reports (written by any caregiver assigned to this individual)
+    cursor.execute("""
+        SELECT cr.id, cr.report_text, cr.created_at, cg.name as caregiver_name
+        FROM case_reports cr
+        JOIN users cg ON cr.caregiver_id = cg.id
+        WHERE cr.individual_id = ?
+        ORDER BY cr.created_at DESC
+    """, (individual_id,))
+    reports = cursor.fetchall()
+
+    conn.close()
+    return render_template('case_reports.html', individual=individual, reports=reports)
+
+@app.route('/case-reports/add', methods=['POST'])
+@role_required('caregiver')
+def add_case_report():
+    caregiver_id = session['user_id']
+    individual_id = request.form.get('individual_id')
+    report_text = request.form.get('report_text', '').strip()
+
+    if not individual_id or not report_text:
+        flash("Case report details cannot be empty.", "danger")
+        return redirect(url_for('dashboard_caregiver'))
+
+    report_id = str(uuid.uuid4())
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO case_reports (id, individual_id, caregiver_id, report_text) VALUES (?, ?, ?, ?)",
+        (report_id, individual_id, caregiver_id, report_text)
+    )
+    conn.commit()
+    conn.close()
+
+    flash("Case report logged successfully.", "success")
+    return redirect(url_for('view_case_reports', individual_id=individual_id))
 
 # ================================
 # DIRECT CHAT SYSTEM
@@ -326,6 +472,10 @@ def dashboard_admin():
     """)
     caregivers = cursor.fetchall()
 
+    caregiver_ratings = {}
+    for cg in caregivers:
+        caregiver_ratings[cg['id']] = get_caregiver_rating_info(cg['id'])
+
     cursor.execute("""
         SELECT u.id, u.name, u.email, u.phone, u.location, u.created_at,
                cg.name as caregiver_name
@@ -344,6 +494,7 @@ def dashboard_admin():
     return render_template(
         'dashboard_admin.html',
         caregivers=caregivers,
+        caregiver_ratings=caregiver_ratings,
         individuals=individuals,
         admins=admins
     )

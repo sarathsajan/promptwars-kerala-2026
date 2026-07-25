@@ -120,6 +120,24 @@ def get_available_caregivers():
     return caregivers
 
 
+def get_caregiver_rating_info(caregiver_id):
+    """Calculates average rating score (1-5) and total review count for a caregiver."""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT AVG(rating) as avg_rating, COUNT(*) as review_count
+        FROM reviews
+        WHERE caregiver_id = ?
+    """, (caregiver_id,))
+    row = cursor.fetchone()
+    conn.close()
+    
+    avg_score = round(row['avg_rating'], 1) if row['avg_rating'] else None
+    return {
+        'avg_rating': avg_score,
+        'review_count': row['review_count']
+    }
+
 def auto_assign_caregiver(individual_id):
     """Assigns an individual to an available caregiver with space (<5 capacity). Returns caregiver_id or None."""
     available = get_available_caregivers()

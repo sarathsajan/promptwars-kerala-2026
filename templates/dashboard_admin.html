@@ -29,7 +29,10 @@
                     <tr>
                         <td>
                             <strong>{{ cg.name }}</strong>
-                            <br><small style="color: var(--text-secondary);">{{ cg.email }}</small>
+                            <br><small style="color: var(--text-muted);">{{ cg.email }}</small>
+                            {% if caregiver_ratings[cg.id] and caregiver_ratings[cg.id].avg_rating %}
+                                <br><small style="color: #d97706; font-weight: 700;">⭐ {{ caregiver_ratings[cg.id].avg_rating }} ({{ caregiver_ratings[cg.id].review_count }} reviews)</small>
+                            {% endif %}
                         </td>
                         <td>
                             <small><strong>Edu:</strong> {{ cg.education }}</small><br>

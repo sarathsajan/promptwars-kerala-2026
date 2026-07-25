@@ -68,3 +68,37 @@ CREATE TABLE IF NOT EXISTS educational_resources (
     external_link TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
+
+-- STAGE 2: Case Reports Table (Visible to all caregivers assigned to that individual)
+CREATE TABLE IF NOT EXISTS case_reports (
+    id TEXT PRIMARY KEY,
+    individual_id TEXT NOT NULL,
+    caregiver_id TEXT NOT NULL,
+    report_text TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(individual_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY(caregiver_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- STAGE 2: Mood Logs Table
+CREATE TABLE IF NOT EXISTS mood_logs (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    mood_type TEXT NOT NULL,
+    notes TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- STAGE 2: Caregiver Reviews Table
+CREATE TABLE IF NOT EXISTS reviews (
+    id TEXT PRIMARY KEY,
+    individual_id TEXT NOT NULL,
+    caregiver_id TEXT NOT NULL,
+    rating INTEGER CHECK(rating >= 1 AND rating <= 5) NOT NULL,
+    review_text TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(individual_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY(caregiver_id) REFERENCES users(id) ON DELETE CASCADE
+);
+

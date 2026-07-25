@@ -4,16 +4,16 @@
 
 {% block content %}
 <div style="margin-bottom: 2rem;">
-    <h1 style="font-size: 1.8rem; margin-bottom: 0.25rem;">Welcome, {{ user.name }}</h1>
-    <p style="color: var(--text-secondary);">Your personal recovery dashboard.</p>
+    <h1 style="font-size: 1.8rem; margin-bottom: 0.25rem; color: var(--brand-primary);">Welcome, {{ user.name }}</h1>
+    <p style="color: var(--text-muted);">Your personal recovery dashboard and daily well-being tracker.</p>
 </div>
 
-<!-- CRISIS CALLOUT BANNER -->
-<div class="card" style="background: rgba(225, 29, 72, 0.15); border: 2px solid var(--accent-coral); margin-bottom: 2rem;">
+<!-- CRISIS BANNER -->
+<div class="card" style="background: #fef2f2; border: 2px solid var(--cta-terracotta); margin-bottom: 2rem;">
     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
         <div>
-            <h2 style="color: #fecdd3; font-size: 1.3rem; margin-bottom: 0.3rem;">🚨 In Distress or Need Immediate Help?</h2>
-            <p style="color: var(--text-primary); font-size: 1rem;">Access emergency numbers, crisis grounding tools, and caregiver contacts.</p>
+            <h2 style="color: #991b1b; font-size: 1.3rem; margin-bottom: 0.3rem;">🚨 In Distress or Need Immediate Help?</h2>
+            <p style="color: var(--text-main); font-size: 1rem;">Access emergency numbers, crisis grounding tools, and caregiver contacts.</p>
         </div>
         <a href="{{ url_for('panic_button') }}" class="btn btn-danger" style="font-size: 1.1rem; padding: 0.85rem 1.6rem;" aria-label="Open Emergency Crisis Help Page">
             EMERGENCY CRISIS HELP
@@ -21,26 +21,85 @@
     </div>
 </div>
 
+<!-- STAGE 2: MOOD TRACKER WIDGET -->
+<div class="card" style="margin-bottom: 2rem;">
+    <h2 class="card-title" style="color: var(--brand-primary);">
+        😊 Daily Mood & Well-being Tracker
+    </h2>
+    <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1rem;">How are you feeling right now? Tap a mood to log your entry.</p>
+
+    <form action="{{ url_for('log_mood') }}" method="POST" style="margin-bottom: 1.5rem;">
+        <div style="display: flex; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 1rem;">
+            <button type="submit" name="mood_type" value="Calm" class="btn btn-secondary" style="border-color: var(--brand-primary);">🌱 Calm</button>
+            <button type="submit" name="mood_type" value="Hopeful" class="btn btn-secondary" style="border-color: var(--brand-primary);">✨ Hopeful</button>
+            <button type="submit" name="mood_type" value="Anxious" class="btn btn-secondary" style="border-color: #f59e0b;">😟 Anxious</button>
+            <button type="submit" name="mood_type" value="Stressed" class="btn btn-secondary" style="border-color: #f59e0b;">⚡ Stressed</button>
+            <button type="submit" name="mood_type" value="Craving" class="btn btn-secondary" style="border-color: var(--cta-terracotta);">🔥 Craving</button>
+            <button type="submit" name="mood_type" value="Overwhelmed" class="btn btn-secondary" style="border-color: var(--cta-terracotta);">🌧️ Overwhelmed</button>
+        </div>
+    </form>
+
+    {% if mood_logs %}
+        <h3 style="font-size: 1rem; color: var(--brand-primary); margin-bottom: 0.6rem;">Recent Mood Log History:</h3>
+        <div style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
+            {% for m in mood_logs %}
+                <div style="background: var(--brand-soft-sage); border: 1px solid var(--border-subtle); padding: 0.4rem 0.8rem; border-radius: var(--radius-sm); font-size: 0.85rem;">
+                    <strong>{{ m.mood_type }}</strong> <small style="color: var(--text-muted);">({{ m.created_at }})</small>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+
 <div class="grid-2">
-    <!-- ASSIGNED CAREGIVER -->
+    <!-- ASSIGNED CAREGIVER & RATING -->
     <div class="card">
         <h2 class="card-title">👤 Assigned Caregiver</h2>
         {% if caregiver %}
-            <div style="margin-bottom: 1.5rem;">
-                <h3 style="font-size: 1.2rem; color: var(--accent-teal);">{{ caregiver.name }}</h3>
-                <p style="color: var(--text-secondary); font-size: 0.95rem; margin-top: 0.2rem;">{{ caregiver.qualification }} • {{ caregiver.education }}</p>
+            <div style="margin-bottom: 1.2rem;">
+                <h3 style="font-size: 1.2rem; color: var(--brand-primary);">{{ caregiver.name }}</h3>
+                <p style="color: var(--text-muted); font-size: 0.95rem; margin-top: 0.2rem;">{{ caregiver.qualification }} • {{ caregiver.education }}</p>
+                
+                {% if caregiver_rating and caregiver_rating.avg_rating %}
+                    <div style="margin-top: 0.5rem; font-size: 0.95rem; color: #d97706; font-weight: 700;">
+                        ⭐ {{ caregiver_rating.avg_rating }} / 5.0 <small style="color: var(--text-muted); font-weight: normal;">({{ caregiver_rating.review_count }} reviews)</small>
+                    </div>
+                {% endif %}
+
                 <div style="margin-top: 0.8rem; font-size: 0.95rem;">
                     <p>📞 Phone: <strong>{{ caregiver.phone }}</strong></p>
                     <p>📍 Location: {{ caregiver.location }}</p>
                 </div>
             </div>
-            <a href="{{ url_for('chat', recipient_id=caregiver.id) }}" class="btn btn-primary" style="width: 100%;">
+
+            <a href="{{ url_for('chat', recipient_id=caregiver.id) }}" class="btn btn-primary" style="width: 100%; margin-bottom: 1.2rem;">
                 💬 Chat with Caregiver
             </a>
+
+            <!-- STAGE 2: CAREGIVER REVIEW FORM -->
+            <div style="border-top: 1px solid var(--border-subtle); padding-top: 1rem;">
+                <h4 style="font-size: 0.95rem; color: var(--brand-primary); margin-bottom: 0.6rem;">Rate Your Caregiver Experience</h4>
+                <form action="{{ url_for('submit_caregiver_review') }}" method="POST">
+                    <input type="hidden" name="caregiver_id" value="{{ caregiver.id }}">
+                    <div class="form-group" style="margin-bottom: 0.6rem;">
+                        <select name="rating" class="form-control" style="min-height: 40px;" required>
+                            <option value="5" {% if existing_review and existing_review.rating == 5 %}selected{% endif %}>⭐⭐⭐⭐⭐ (5 Stars - Excellent)</option>
+                            <option value="4" {% if existing_review and existing_review.rating == 4 %}selected{% endif %}>⭐⭐⭐⭐ (4 Stars - Good)</option>
+                            <option value="3" {% if existing_review and existing_review.rating == 3 %}selected{% endif %}>⭐⭐⭐ (3 Stars - Average)</option>
+                            <option value="2" {% if existing_review and existing_review.rating == 2 %}selected{% endif %}>⭐⭐ (2 Stars - Below Average)</option>
+                            <option value="1" {% if existing_review and existing_review.rating == 1 %}selected{% endif %}>⭐ (1 Star - Poor)</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0.6rem;">
+                        <input type="text" name="review_text" class="form-control" placeholder="Optional feedback..." value="{% if existing_review %}{{ existing_review.review_text }}{% endif %}" style="min-height: 40px;">
+                    </div>
+                    <button type="submit" class="btn btn-secondary" style="width: 100%; font-size: 0.9rem; min-height: 40px;">Submit Feedback</button>
+                </form>
+            </div>
         {% else %}
-            <div style="padding: 1.5rem; text-align: center; background: rgba(11, 19, 43, 0.6); border-radius: var(--radius-sm);">
-                <p style="color: var(--text-secondary); margin-bottom: 0.5rem;">No caregiver currently assigned.</p>
-                <p style="font-size: 0.9rem; color: #fef3c7;">An available verified caregiver will be paired automatically.</p>
+            <div style="padding: 1.5rem; text-align: center; background: var(--bg-card-alt); border-radius: var(--radius-sm);">
+                <p style="color: var(--text-muted); margin-bottom: 0.5rem;">No caregiver currently assigned.</p>
+                <p style="font-size: 0.9rem; color: var(--brand-primary);">An available verified caregiver will be paired automatically.</p>
             </div>
         {% endif %}
     </div>
@@ -49,16 +108,16 @@
     <div class="card">
         <h2 class="card-title">
             📞 Emergency Contacts
-            <span style="font-size: 0.9rem; color: var(--text-secondary);">({{ contacts|length }}/2)</span>
+            <span style="font-size: 0.9rem; color: var(--text-muted);">({{ contacts|length }}/2)</span>
         </h2>
 
         {% if contacts %}
             <ul style="list-style: none; margin-bottom: 1.5rem;">
                 {% for contact in contacts %}
-                    <li style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid var(--border-color);">
+                    <li style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid var(--border-subtle);">
                         <div>
                             <strong>{{ contact.name }}</strong> ({{ contact.relationship }})
-                            <br><span style="color: var(--text-secondary); font-size: 0.95rem;">{{ contact.phone }}</span>
+                            <br><span style="color: var(--text-muted); font-size: 0.95rem;">{{ contact.phone }}</span>
                         </div>
                         <form action="{{ url_for('delete_emergency_contact', contact_id=contact.id) }}" method="POST" style="margin: 0;">
                             <button type="submit" class="btn btn-danger" style="padding: 0.35rem 0.7rem; font-size: 0.85rem;" aria-label="Remove {{ contact.name }}">Remove</button>
@@ -67,7 +126,7 @@
                 {% endfor %}
             </ul>
         {% else %}
-            <p style="color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 1.5rem;">No emergency contacts added yet.</p>
+            <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;">No emergency contacts added yet.</p>
         {% endif %}
 
         {% if contacts|length < 2 %}

@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Case Reports - {{ individual.name }}{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <div>
+        <h1 style="font-size: 1.8rem; color: var(--brand-primary); margin-bottom: 0.2rem;">📋 Case Reports: {{ individual.name }}</h1>
+        <p style="color: var(--text-muted);">Shared medical & progress history visible to all assigned caregivers.</p>
+    </div>
+    <a href="{{ url_for('dashboard_caregiver') }}" class="btn btn-secondary">&larr; Back to Workspace</a>
+</div>
+
+<!-- NEW CASE REPORT FORM -->
+<div class="card" style="margin-bottom: 2rem;">
+    <h2 class="card-title" style="color: var(--brand-primary);">+ Log New Case Entry</h2>
+    <form action="{{ url_for('add_case_report') }}" method="POST">
+        <input type="hidden" name="individual_id" value="{{ individual.id }}">
+        <div class="form-group">
+            <label for="report_text">Detailed Case Notes & Observation</label>
+            <textarea id="report_text" name="report_text" class="form-control" rows="4" placeholder="Enter clinical observations, progress notes, or risk assessment..." required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Save Case Report</button>
+    </form>
+</div>
+
+<!-- HISTORICAL CASE REPORTS LOG -->
+<div class="card">
+    <h2 class="card-title" style="color: var(--brand-primary);">
+        📜 Historical Case Reports
+        <span style="font-size: 0.9rem; color: var(--text-muted);">({{ reports|length }} entries)</span>
+    </h2>
+
+    {% if reports %}
+        <div style="display: flex; flex-direction: column; gap: 1.25rem; margin-top: 1rem;">
+            {% for r in reports %}
+                <div style="background: var(--bg-main); border: 1px solid var(--border-subtle); padding: 1.2rem; border-radius: var(--radius-sm); border-left: 4px solid var(--brand-primary);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
+                        <strong style="color: var(--brand-primary); font-size: 1.05rem;">👨‍⚕️ Author: {{ r.caregiver_name }}</strong>
+                        <span style="font-size: 0.85rem; color: var(--text-muted);">{{ r.created_at }}</span>
+                    </div>
+                    <p style="color: var(--text-main); font-size: 1rem; line-height: 1.6; white-space: pre-line;">{{ r.report_text }}</p>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p style="color: var(--text-muted); padding: 1rem 0;">No case reports logged for this individual user yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

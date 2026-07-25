@@ -4,22 +4,22 @@
 
 {% block content %}
 <div style="margin-bottom: 2rem;">
-    <h1 style="font-size: 1.8rem; margin-bottom: 0.25rem;">Caregiver Workspace: {{ caregiver.name }}</h1>
-    <p style="color: var(--text-secondary);">Manage support for your assigned individual users.</p>
+    <h1 style="font-size: 1.8rem; margin-bottom: 0.25rem; color: var(--brand-primary);">Caregiver Workspace: {{ caregiver.name }}</h1>
+    <p style="color: var(--text-muted);">Manage support and case reports for your assigned individual users.</p>
 </div>
 
 <!-- PROFILE STATUS -->
 <div class="card">
     <div style="display: flex; gap: 1.5rem; flex-wrap: wrap; align-items: center; justify-content: space-between;">
         <div>
-            <span style="font-weight: 600; color: var(--text-secondary);">Verification:</span>
+            <span style="font-weight: 600; color: var(--text-muted);">Verification:</span>
             {% if caregiver.is_verified == 1 %}
                 <span class="alert alert-success" style="padding: 0.2rem 0.6rem; font-size: 0.85rem;">Verified</span>
             {% else %}
                 <span class="alert alert-warning" style="padding: 0.2rem 0.6rem; font-size: 0.85rem;">Pending Admin Review</span>
             {% endif %}
             
-            <span style="font-weight: 600; color: var(--text-secondary); margin-left: 1rem;">Status:</span>
+            <span style="font-weight: 600; color: var(--text-muted); margin-left: 1rem;">Status:</span>
             {% if caregiver.is_active == 1 %}
                 <span class="alert alert-success" style="padding: 0.2rem 0.6rem; font-size: 0.85rem;">Active</span>
             {% else %}
@@ -27,8 +27,13 @@
             {% endif %}
         </div>
         <div>
-            <span style="font-weight: 600; color: var(--text-secondary);">Current Capacity:</span>
-            <strong style="color: var(--accent-teal); font-size: 1.1rem;">{{ assigned_count }} / 5 Users</strong>
+            {% if rating_info and rating_info.avg_rating %}
+                <span style="font-weight: 600; color: #d97706; margin-right: 1.5rem;">
+                    ⭐ Rating: {{ rating_info.avg_rating }} / 5.0 ({{ rating_info.review_count }} reviews)
+                </span>
+            {% endif %}
+            <span style="font-weight: 600; color: var(--text-muted);">Capacity:</span>
+            <strong style="color: var(--brand-primary); font-size: 1.1rem;">{{ assigned_count }} / 5 Users</strong>
         </div>
     </div>
 </div>
@@ -63,12 +68,15 @@
                             <td>{{ user.location }}</td>
                             <td>{{ user.assigned_at }}</td>
                             <td>
-                                <div style="display: flex; gap: 0.5rem;">
-                                    <a href="{{ url_for('chat', recipient_id=user.id) }}" class="btn btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" aria-label="Open Chat with {{ user.name }}">
+                                <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+                                    <a href="{{ url_for('chat', recipient_id=user.id) }}" class="btn btn-primary" style="padding: 0.35rem 0.7rem; font-size: 0.85rem;" aria-label="Open Chat with {{ user.name }}">
                                         💬 Chat
                                     </a>
-                                    <a href="{{ url_for('panic_button', user_id=user.id) }}" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" aria-label="View {{ user.name }} Crisis Contacts">
-                                        View Crisis Contacts
+                                    <a href="{{ url_for('view_case_reports', individual_id=user.id) }}" class="btn btn-secondary" style="padding: 0.35rem 0.7rem; font-size: 0.85rem;" aria-label="View Case Reports for {{ user.name }}">
+                                        📋 Case Reports ({{ user.case_report_count }})
+                                    </a>
+                                    <a href="{{ url_for('panic_button', user_id=user.id) }}" class="btn btn-secondary" style="padding: 0.35rem 0.7rem; font-size: 0.85rem;" aria-label="View {{ user.name }} Crisis Contacts">
+                                        Crisis Contacts
                                     </a>
                                 </div>
                             </td>
@@ -78,7 +86,7 @@
             </table>
         </div>
     {% else %}
-        <p style="color: var(--text-secondary); padding: 1rem 0;">No individual users currently assigned to your workspace.</p>
+        <p style="color: var(--text-muted); padding: 1rem 0;">No individual users currently assigned to your workspace.</p>
     {% endif %}
 </div>
 {% endblock %}
